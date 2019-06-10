@@ -1,4 +1,4 @@
 # CanvasQQAirBubble
 高级UI-QQ气泡效果
 
-![image](app/src/show.gif)
+![image](https://github.com/leiboy123/CanvasQQAirBubble/app/src/show.gif)
