@@ -1,5 +1,6 @@
 package com.bezier.womob.test;
 
+import android.animation.Animator;
 import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -14,12 +15,11 @@ import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
-import android.view.animation.OvershootInterpolator;
 
 import com.bezier.womob.R;
 
 
-public class Rocket extends View implements View.OnClickListener{
+public class Rocket extends View implements View.OnClickListener {
 
     private Path path = new Path();
     private Paint paint = new Paint();
@@ -38,6 +38,8 @@ public class Rocket extends View implements View.OnClickListener{
     private int controlOneY;
     private int controlTwoX;
     private int controlTwoY;
+    private int preX;
+    private int preY;
 
     public Rocket(Context context) {
         this(context, null);
@@ -66,17 +68,23 @@ public class Rocket extends View implements View.OnClickListener{
 //        controlTwoY = -700;
 //        endX = -500;
 //        endY = -1600;
-
-        startX = 500;
-        startY = 1800;
+        bitmapW = mBitmap.getWidth() / 2;
+        bitmapH = mBitmap.getHeight() / 2;
+        startX = 500 - bitmapW;
+        startY = 1600 - bitmapH;
+//        startY = 1800;
         mCurX = startX;
-        mCurY= startY;
-        controlOneX= 0;
-        controlOneY = -700;
-        controlTwoX = 1300;
-        controlTwoY = -700;
-        endX = -500;
-        endY = -1600;
+        mCurY = startY;
+//        preX = 485 - bitmapW;
+//        preY = 1593 - bitmapH;
+        preX = startX;
+        preY = startY + 1;
+        controlOneX = 500;
+        controlOneY = 900;
+        controlTwoX = 1400;
+        controlTwoY = 400;
+        endX = 0;
+        endY = 200;
         setOnClickListener(this);
     }
 
@@ -90,46 +98,77 @@ public class Rocket extends View implements View.OnClickListener{
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-        Log.e("ondraw",startX+"");
-//        path.moveTo(500,1200);
+        Log.e("ondraw", startX + "");
 //        path.rQuadTo(200,-400,500,0);
 //        canvas.drawCircle(startX, startY, 20, paint);
         //画布移到屏幕中心
 //        canvas.translate((float) mWidth / 2, (float) mHeight / 2);
         path.moveTo(startX, startY);
-//        mPath.cubicTo(500,100,600,1200,800,500);
-        //参数表示相对位置，等同于上一行代码  0 500
-        path.rCubicTo(controlOneX, controlOneY, controlTwoX, controlTwoY, endX, endY);
+        path.cubicTo(controlOneX, controlOneY, controlTwoX, controlTwoY, endX, endY);
 //        path.rCubicTo(0, -900, 800, -900, -500, -1400);
-//        canvas.drawCircle(200,500,10,paint);
         canvas.drawPath(path, paint);
 //        path.reset();
-        bitmapW = mBitmap.getWidth();
-        bitmapH = mBitmap.getHeight();
-        drawRotateBitmap(canvas, paint, mBitmap, -90, mCurX - bitmapW / 2, mCurY - bitmapH / 2);
+
+//        canvas.drawBitmap(mBitmap, mCurX , mCurY , paint);
+        Log.e("mCurX - bitmapW / 2", bitmapW + "");
 //        drawRotateBitmap(canvas, paint, mBitmap, -90, mCurX , mCurY );
 //        canvas.drawPath(path, paint);
 //        animationArrow();
+
+
+        float angle = (float) Math.atan2((mCurY - preY), (mCurX - preX));
+        Log.e("rocket  point", "preX :" + preX + "  preY :" + preY + ", mCurX :" + mCurX + " , mCurY" + mCurY);
+        preX = mCurX;
+        preY = mCurY;
+        Log.e("angle", angle * 180 / Math.PI + "");
+        drawRotateBitmap(canvas, paint, mBitmap, (float) (angle * 180 / Math.PI), mCurX, mCurY);
     }
+
     @Override
     public void onClick(View view) {
         animationArrow();
     }
+
     public void animationArrow() {
         BezierEvaluator evaluator = new BezierEvaluator(new PointF(controlOneX, controlOneY), new PointF(controlTwoX, controlTwoY));
         PointF startPoint = new PointF(startX, startY);
         PointF endPoint = new PointF(endX, endY);
         ValueAnimator anim = ValueAnimator.ofObject(evaluator, startPoint, endPoint);
-        anim.setDuration(2000);
+        anim.setDuration(4000);
 //        anim.setInterpolator(new OvershootInterpolator(5f));
         anim.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator valueAnimator) {
                 PointF curPoint = (PointF) valueAnimator.getAnimatedValue();
-                mCurX = (int) curPoint.x;
-                mCurY = (int) curPoint.y;
-                Log.e("rocket  mCurX : ",mCurX+", mCurY :"+mCurY);
+                mCurX = (int) curPoint.x - bitmapW / 2;
+                mCurY = (int) curPoint.y - bitmapH / 2;
+                Log.e("rocket  mCurX  ", mCurX + ", mCurY :" + mCurY);
                 invalidate();
+            }
+        });
+        anim.addListener(new Animator.AnimatorListener() {
+            @Override
+            public void onAnimationStart(Animator animation) {
+
+            }
+
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                mCurX = startX;
+                mCurY = startY;
+                preX = startX;
+                preY = startY + 1;
+                invalidate();
+            }
+
+            @Override
+            public void onAnimationCancel(Animator animation) {
+
+            }
+
+            @Override
+            public void onAnimationRepeat(Animator animation) {
+
             }
         });
         anim.start();
